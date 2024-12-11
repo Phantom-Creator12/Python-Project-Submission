@@ -54,7 +54,7 @@ _pip install requests pandas time urlencode random
 **Example**
 Here's an example of how to use the scripts:  
 
-1. Run the Recommender.py script  
+1. Run the tmdb_recommender.py script  
 2. Enter the following inputs when prompted:   
   • Enter your API key : xxxxxxxxxxxxxxxxxxx     
   • Enter the genre: action   
