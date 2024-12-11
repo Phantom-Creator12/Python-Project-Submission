@@ -1,47 +1,61 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from bs4 import BeautifulSoup
+from selenium.webdriver.chrome.service import Service
 import pandas as pd
 import re
 
 def Movie_Scraper():
     def get_genre_movies(genre, start_year, min_rating, min_metascore):
+        """
+        Fetches the top movies in a given genre from IMDb starting from a specific year
+        with minimum rating, vote count, and metascore criteria.
+
+        Args:
+        genre (str): The genre of movies to fetch.
+        start_year (int): The starting year for movie release date.
+        min_rating (float): The minimum IMDb rating for the movies.
+        min_metascore (int): The minimum metascore for the movies.
+
+        Returns:
+        list: A list of dictionaries containing movie details.
+        """
         print(f"Fetching information for the top 250 movies in the {genre} genre from the year {start_year} onwards...")
 
-        service = Service(r'C:\Users\abhi1\.vscode\chromedriver-win64\chromedriver.exe')
+        # Initialize the WebDriver using the Service class
+        service = Service('C:/path/to/chromedriver.exe')
         driver = webdriver.Chrome(service=service)
 
-        url = f"https://www.imdb.com/search/title/?title_type=feature&release_date={start_year},&user_rating={min_rating},10&num_votes=2500,&genres={genre}&count=250&sort=user_rating,desc"
+        # Construct the URL for the IMDb search page based on the provided genre, start year, and vote count
+        url = f"https://www.imdb.com/search/title/?genres={genre}&sort=user_rating,desc&count=250&start_year={start_year}&num_votes=2500,"
         driver.get(url)
 
         movies = []
         try:
+            # Wait for the movie list to load
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'lister-item')))
-            
-            soup = BeautifulSoup(driver.page_source, 'html.parser')
-            items = soup.find_all('div', class_='lister-item')
-            print(f"Number of movies found: {len(items)}")
+
+            items = driver.find_elements(By.CLASS_NAME, 'lister-item')
+            print(f"Number of movies found: {len(items)}")  # Debugging output
 
             for item in items:
                 try:
                     # Extract the movie title
-                    title = item.h3.a.text.strip()
-                    print(f"Title: {title}")
+                    title = item.find_element(By.CLASS_NAME, 'lister-item-header').find_element(By.TAG_NAME, 'a').text.strip()
+                    print(f"Title: {title}")  # Debugging output
                     # Extract the release year
-                    year = item.h3.find('span', class_='lister-item-year').text.strip()
-                    print(f"Year: {year}")
+                    year = item.find_element(By.CLASS_NAME, 'lister-item-year').text.strip()
+                    print(f"Year: {year}")  # Debugging output
                     # Extract the IMDb rating
-                    rating_tag = item.find('div', class_='ratings-imdb-rating').strong
+                    rating_tag = item.find_element(By.CLASS_NAME, 'ratings-imdb-rating').find_element(By.TAG_NAME, 'strong')
                     rating = rating_tag.text.strip() if rating_tag else 'N/A'
-                    print(f"Rating: {rating}")
+                    print(f"Rating: {rating}")  # Debugging output
                     # Extract the metascore
-                    metascore_tag = item.find('span', class_='metascore')
-                    metascore = int(metascore_tag.text.strip()) if metascore_tag else 0
-                    print(f"Metascore: {metascore}")
+                    metascore_tag = item.find_elements(By.CLASS_NAME, 'metascore')
+                    metascore = int(metascore_tag[0].text.strip()) if metascore_tag else 0
+                    print(f"Metascore: {metascore}")  # Debugging output
 
                     # Filter movies based on rating and metascore criteria
                     if rating != 'N/A' and float(rating) >= min_rating and metascore >= min_metascore:
@@ -62,6 +76,9 @@ def Movie_Scraper():
         return movies
 
     def get_valid_genre():
+        """
+        Prompts the user to enter a valid movie genre and returns it.
+        """
         while True:
             genre = input("Enter the genre: ").strip()
             if re.match("^[a-zA-Z]+$", genre):
@@ -70,6 +87,9 @@ def Movie_Scraper():
                 print("Invalid genre. Please enter a genre using only alphabetic characters.")
 
     def get_valid_year():
+        """
+        Prompts the user to enter a valid start year for movie release date and returns it.
+        """
         while True:
             year = input("Enter the release date start year (e.g., 2000): ").strip()
             if re.match(r"^\d{4}$", year):
@@ -78,6 +98,9 @@ def Movie_Scraper():
                 print("Invalid year. Please enter a valid 4-digit year.")
 
     def get_valid_metascore():
+        """
+        Prompts the user to enter a valid minimum metascore and returns it.
+        """
         while True:
             metascore = input("Enter the minimum metascore (e.g., 50): ").strip()
             try:
@@ -87,6 +110,9 @@ def Movie_Scraper():
                 print("Invalid input. Please enter a valid number.")
 
     def get_valid_rating():
+        """
+        Prompts the user to enter a valid minimum IMDb rating and returns it.
+        """
         while True:
             rating = input("Enter the minimum rating (e.g., 7.0): ").strip()
             try:
@@ -96,6 +122,9 @@ def Movie_Scraper():
                 print("Invalid input. Please enter a valid number.")
 
     def save_to_csv(movies, genre):
+        """
+        Saves the list of movies to a CSV file named after the genre.
+        """
         if not movies:
             print("No movies found matching the criteria.")
             return None
@@ -106,11 +135,13 @@ def Movie_Scraper():
         print(f"Data saved to {filename}")
         return filename
 
+    # Get user inputs for genre, start year, minimum metascore, and minimum rating
     genre = get_valid_genre()
     start_year = get_valid_year()
     min_metascore = get_valid_metascore()
     min_rating = get_valid_rating()
 
+    # Fetch the movie data and save it to a CSV file
     movies = get_genre_movies(genre, start_year, min_rating, min_metascore)
     save_to_csv(movies, genre)
 
