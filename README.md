@@ -7,11 +7,11 @@ This project provides a basic movie recommendation system using the TMDB API.
 
 **Prerequisites**
 Before running the scripts, ensure you have the following Python packages installed:
-• requests
-• time
-• pandas
-• urlencode
-• random
+\n• requests
+\n• time
+\n• pandas
+\n• urlencode
+\n• random
 
 Can be installed using pip:
 _pip install requests pandas time urlencode random
